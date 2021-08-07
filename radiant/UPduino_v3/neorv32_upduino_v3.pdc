@@ -1,0 +1,10 @@
+# Radiant pin mapping for the "tinyvision.ai Inc. UPduino v3" FPGA board
+
+## UART (uart0)
+ldc_set_location -site {38} [get_ports uart_txd_o]
+ldc_set_location -site {28} [get_ports uart_rxd_i]
+
+## RGB power LED
+ldc_set_location -site {39} [get_ports {rgb_o[0]}]
+ldc_set_location -site {40} [get_ports {rgb_o[1]}]
+ldc_set_location -site {41} [get_ports {rgb_o[2]}]

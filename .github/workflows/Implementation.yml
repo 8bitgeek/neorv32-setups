@@ -1,0 +1,61 @@
+name: Implementation
+
+on:
+  push:
+    paths:
+    - './**'
+  pull_request:
+    paths:
+    - './**'
+  schedule:
+    - cron: '0 0 * * 5'
+  workflow_dispatch:
+
+jobs:
+
+
+  Matrix:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.generate.outputs.matrix }}
+
+    steps:
+
+    - name: '🧰 Repository Checkout'
+      uses: actions/checkout@v2
+      with:
+        submodules: recursive
+
+    - name: '🔧 Generate examples matrix'
+      id: generate
+      run: ./.github/generate-job-matrix.py
+
+
+  All-in-one:
+    needs: Matrix
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJson(needs.Matrix.outputs.matrix) }}
+    name: '🛳️ All-in-one | ${{ matrix.board }} · ${{ matrix.design }}'
+
+    steps:
+
+    - name: '🧰 Repository Checkout'
+      uses: actions/checkout@v2
+      with:
+        submodules: recursive
+
+    - name: '🚧 Generate ${{ matrix.board }} ${{ matrix.design }} bitstream'
+      uses: docker://ghcr.io/stnolting/neorv32/impl
+      with:
+        args: make -C examples BOARD=${{ matrix.board }} ${{ matrix.design }}
+
+    - name: '📤 Upload Artifact: ${{ matrix.board }} ${{ matrix.design }} bitstream and reports'
+      uses: actions/upload-artifact@v2
+      with:
+        name: ${{ matrix.board }}-${{ matrix.design }}
+        path: |
+          examples/${{ matrix.bitstream }}
+          osflow/${{ matrix.board }}/*-report.txt
